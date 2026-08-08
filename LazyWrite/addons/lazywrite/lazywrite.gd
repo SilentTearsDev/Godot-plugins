@@ -25,7 +25,6 @@ const WORD_SUBS := {
 	"brk": "break",
 	"cnt": "continue",
 	"slf": "self",
-	"neq": "!=",
 }
 
 const TRIGGER_CHARS := [" ", "\t", "("]
@@ -645,3 +644,4 @@ func _process_function_line(line_idx: int) -> void:
 		edit.set_caret_line(min(caret_line, edit.get_line_count() - 1))
 
 	_replacing = false
+
