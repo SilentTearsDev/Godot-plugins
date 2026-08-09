@@ -418,6 +418,42 @@ func _process_match_line(edit: TextEdit, line_idx: int) -> bool:
 		return false
 
 	var line_text := edit.get_line(line_idx)
+
+	# Match shorthand with a string case and an automatic pass body:
+	#
+	#   mat varname str first_itemname p
+	#
+	# becomes:
+	#
+	#   match varname:
+	#       "first_itemname":
+	#           pass
+	var case_regex := RegEx.new()
+	case_regex.compile("^(\\s*)mat\\s+([A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*)\\s+str\\s+([^\\s]+)\\s+p\\s*$")
+
+	var case_match := case_regex.search(line_text)
+	if case_match != null:
+		var indent := case_match.get_string(1)
+		var expression := case_match.get_string(2)
+		var case_name := case_match.get_string(3)
+
+		_replacing = true
+		edit.set_line(line_idx, "%smatch %s:" % [indent, expression])
+		edit.insert_line_at(line_idx + 1, indent + "\t\"" + case_name + "\":")
+		edit.insert_line_at(line_idx + 2, indent + "\t\tpass")
+		edit.set_caret_line(line_idx + 2)
+		edit.set_caret_column((indent + "\t\tpass").length())
+		_replacing = false
+		return true
+
+	# Basic match shorthand:
+	#
+	#   mat value
+	#
+	# becomes:
+	#
+	#   match value:
+	#       <cursor>
 	var regex := RegEx.new()
 	regex.compile("^(\\s*)mat\\s+(.+?)\\s*$")
 
