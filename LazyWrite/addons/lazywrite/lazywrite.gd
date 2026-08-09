@@ -398,8 +398,47 @@ func _process_completed_line(line_idx: int) -> void:
 	if _process_variable_line(edit, line_idx):
 		return
 
+	if _process_match_line(edit, line_idx):
+		return
+
 	_process_function_line(line_idx)
 
+
+
+# Match shorthand.
+#
+#   mat value
+#       -> match value:
+#          <cursor on the next line, one tab in>
+func _process_match_line(edit: TextEdit, line_idx: int) -> bool:
+	if _replacing:
+		return false
+
+	if line_idx < 0 or line_idx >= edit.get_line_count():
+		return false
+
+	var line_text := edit.get_line(line_idx)
+	var regex := RegEx.new()
+	regex.compile("^(\\s*)mat\\s+(.+?)\\s*$")
+
+	var match := regex.search(line_text)
+	if match == null:
+		return false
+
+	var indent := match.get_string(1)
+	var expression := match.get_string(2).strip_edges()
+	if expression == "":
+		return false
+
+	var new_line := "%smatch %s:" % [indent, expression]
+
+	_replacing = true
+	edit.set_line(line_idx, new_line)
+	edit.insert_line_at(line_idx + 1, indent + "\t")
+	edit.set_caret_line(line_idx + 1)
+	edit.set_caret_column((indent + "\t").length())
+	_replacing = false
+	return true
 
 
 # Variable / constant shorthand.
