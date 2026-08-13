@@ -636,14 +636,17 @@ func _process_function_line(line_idx: int) -> void:
 
 	var make_pass := false
 
-	# Custom marker: `- p` means no arguments and an inline `pass` body.
-	# `-` alone still means a normal argument-free function.
+	# A final `p` is a LazyWrite marker meaning "add pass".
+	# It works with or without arguments:
+	#   fn test - p
+	#   fn test name str p
+	#   fn test name str age i p
 	if raw_args != "":
 		var marker_tokens := raw_args.split(" ", false)
-		if marker_tokens.size() > 0 and marker_tokens[0] == "-":
-			if marker_tokens.size() > 1 and marker_tokens[1].to_lower() == "p":
-				make_pass = true
-			raw_args = ""
+		if marker_tokens.size() > 0 and marker_tokens[-1].to_lower() == "p":
+			make_pass = true
+			marker_tokens.remove_at(marker_tokens.size() - 1)
+			raw_args = " ".join(marker_tokens).strip_edges()
 
 	var output_args: Array[String] = []
 
